@@ -2,6 +2,17 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import requestlogger from "./middleware/requestlogger.js";
+import Report from './models/report.js'
+import mongoose from "mongoose"
+
+
+let username = "Lars"
+let pwd = "Lars123"
+
+const connectionString = `mongodb://${username}:${pwd}@localhost:27017/test`
+
+
+
 
 dotenv.config();
 const app = express();
@@ -16,9 +27,36 @@ app.get("/notifications", (req, res) => {
 
 app.post("/notifications", (req, res) => {
   console.log("Received", req.body);
-  // Somehow save data to DB
-  res.status(201);
-  res.json({ success: true });
+
+  const report = new Report(req.body)
+
+  mongoose
+    .connect(connectionString)
+    .then(async () => {
+      console.log("saveing")
+       await report.save()
+          .then(() => {
+          console.log("report saved!")
+          res.status(201);
+          res.json({
+            success: true
+          });
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+      console.log("connected")
+    })
+    .catch(e => console.log("Error while connecting", e))
+    .finally(()=>{
+      mongoose.connection.close()
+    })
+
+
+
+
+
+
 });
 
 app.use((req, res) => {
